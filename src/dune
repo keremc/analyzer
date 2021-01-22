@@ -7,7 +7,7 @@
   (name goblint)
   (public_name goblint)
   (wrapped false)
-  (modules :standard \ maingoblint apronDomain poly violationZ3)
+  (modules :standard \ mainarinc maindomaintest maingoblint mainspec apronDomain poly violationZ3)
   (libraries goblint-cil.all-features batteries.unthreaded zarith_stubs_js qcheck) ; z3
   (preprocess (staged_pps ppx_import ppx_deriving.std ppx_deriving_yojson ppx_distr_guards ocaml-monadic))
 )
