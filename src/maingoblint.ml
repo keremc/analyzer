@@ -456,6 +456,3 @@ let main =
         if !Messages.worldStopped then exit 124 (* timeout! *)
       with Exit -> exit 1
     )
-
-let _ =
-  at_exit main
