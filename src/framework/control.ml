@@ -502,8 +502,7 @@ struct
     MyCFG.write_cfgs := MyCFG.dead_code_cfg file (module Cfg:CfgBidir);
 
     (* Use "normal" constraint solving *)
-    let lh, gh = Goblintutil.timeout solve_and_postprocess () (float_of_int (get_int "dbg.timeout"))
-      (fun () -> Messages.waitWhat "Timeout reached!") in
+    let lh, gh = solve_and_postprocess () in
     let local_xml = solver2source_result lh in
 
     let liveness =
