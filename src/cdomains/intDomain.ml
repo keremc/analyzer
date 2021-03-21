@@ -460,9 +460,8 @@ end
 module IntervalFunctor(Ints_t : IntOps.IntOps): S with type int_t = Ints_t.t and type t = (Ints_t.t * Ints_t.t) option =
 struct
   let name () = "intervals"
-  type int_t = Ints_t.t
-  type t = (Ints_t.t * Ints_t.t) option
-  let to_yojson t = failwith "to yojson unimplemented"
+  type int_t = Ints_t.t [@to_yojson fun i -> `String (Ints_t.to_string i)] [@@deriving to_yojson]
+  type t = (int_t  * int_t) option [@@deriving to_yojson]
 
   let min_int ik = Ints_t.of_bigint @@ fst @@ Size.range_big_int ik
   let max_int ik = Ints_t.of_bigint @@ snd @@ Size.range_big_int ik
