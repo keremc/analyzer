@@ -148,7 +148,9 @@ struct
       let l = Val.represent xl in
       let m = Val.represent xm in
       let r = Val.represent xr in
-      `Assoc [ ("Partitioned By", e'); ("Partitions", `Triplet (l, m, r)) ]
+      `Assoc [
+        ("Partitioned by", e');
+        ("Partitions", `Triplet (`Tagged ("l", l), `Tagged ("m", m), `Tagged ("r", r))) ]
 
   let get (ask:Q.ask) ((e, (xl, xm, xr)) as x) (i,_) =
     match e, i with
@@ -616,7 +618,7 @@ struct
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base.name ())) Base.printXml x "length" Idx.printXml y
 
   let represent (x, y) =
-    `Assoc [ (Base.name (), Base.represent x); ("length", Idx.represent y) ]
+    `Assoc [ (Base.name (), Base.represent x); ("Length", Idx.represent y) ]
 end
 
 
@@ -662,7 +664,7 @@ struct
   let printXml f (x,y) =
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base.name ())) Base.printXml x "length" Idx.printXml y
   let represent (x, y) =
-    `Assoc [ (Base.name (), Base.represent x); ("length", Idx.represent y) ]
+    `Assoc [ (Base.name (), Base.represent x); ("Length", Idx.represent y) ]
 end
 
 module FlagConfiguredArrayDomain(Val: LatticeWithSmartOps) (Idx:IntDomain.Z):S with type value = Val.t and type idx = Idx.t =
