@@ -142,13 +142,13 @@ struct
   let represent ((e, (xl, xm, xr)) as x) =
     if is_not_partitioned x then
       let join_over_all = Val.join (Val.join xl xm) xr in
-      `Assoc [ ("Any", Val.represent join_over_all) ]
+      `Tagged ("Any", Val.represent join_over_all)
     else
       let e' = Expp.represent e in
       let l = Val.represent xl in
       let m = Val.represent xm in
       let r = Val.represent xr in
-      `Assoc [ ("Partitioned By", e'); ("l", l); ("m", m); ("r", r) ]
+      `Assoc [ ("Partitioned By", e'); ("Partitions", `Triplet (l, m, r)) ]
 
   let get (ask:Q.ask) ((e, (xl, xm, xr)) as x) (i,_) =
     match e, i with
