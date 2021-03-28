@@ -244,6 +244,8 @@ struct
     | _ -> None
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
+
+  let represent x = `Value (short 800 x)
 end
 
 module LockingPattern =
@@ -395,4 +397,7 @@ struct
       | _ -> None
     with Invalid_argument _ -> None
   let printXml f (x,y,z) = BatPrintf.fprintf f "<value>\n<map>\n<key>1</key>\n%a<key>2</key>\n%a<key>3</key>\n%a</map>\n</value>\n" Exp.printXml x Exp.printXml y Exp.printXml z
+
+  let represent (x, y, z) =
+    `Assoc [ ("1", Exp.represent x); ("2", Exp.represent y); ("3", Exp.represent z) ]
 end

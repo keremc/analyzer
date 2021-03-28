@@ -138,6 +138,7 @@ struct
     | `NoOffset -> `NoOffset
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
+  let represent x = `Value (short 800 x)
 end
 
 module type S =
@@ -330,6 +331,7 @@ struct
     | `Field (f,o) -> `Field (f, remove_offset o)
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
+  let represent x = `Value (short 800 x)
 
   let arbitrary () = QCheck.always UnknownPtr (* S TODO: non-unknown *)
 end
@@ -370,6 +372,7 @@ struct
   let narrow = merge `Narrow
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
+  let represent x = `Value (short 800 x)
 end
 
 module Stateless (Idx: Printable.S) =
@@ -397,6 +400,7 @@ struct
     dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
+  let represent x = `Value (short 800 x)
 end
 
 module Fields =
@@ -421,6 +425,11 @@ struct
       BatPrintf.fprintf f "[%s]%a" (I.short 80 x) printInnerXml xs
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%a\n</data>\n</value>\n" printInnerXml x
+
+  let represent x =
+    let o = BatIO.output_string () in
+    printInnerXml o x;
+    `Value (BatIO.close_out o)
 
   let rec prefix x y = match x,y with
     | (x::xs), (y::ys) when FI.equal x y -> prefix xs ys
@@ -599,4 +608,5 @@ struct
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
+  let represent x = `Value (short 800 x)
 end

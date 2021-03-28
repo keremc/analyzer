@@ -19,6 +19,7 @@ struct
   let name () = "proglines"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end
 
 module ProgLocation : Printable.S with type t = location =
@@ -41,6 +42,7 @@ struct
   let name () = "proglines_byte"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end
 
 module ProgLinesFun: Printable.S with type t = location * MyCFG.node * fundec =
@@ -64,6 +66,7 @@ struct
   let name () = "proglinesfun"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end
 
 module Variables =
@@ -100,6 +103,7 @@ struct
   let context () _ = Pretty.nil
   let loopSep _ = true
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
   let var_id _ = "globals"
   let node _ = MyCFG.Function Cil.dummyFunDec.svar
 
@@ -144,6 +148,7 @@ struct
   let name () = "raw strings"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end
 
 module Strings: Lattice.S with type t = [`Bot | `Lifted of string | `Top] =
@@ -166,6 +171,7 @@ struct
   let name () = "raw bools"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (short () x)
+  let represent x = `Value (short () x)
 end
 
 module Bools: Lattice.S with type t = [`Bot | `Lifted of bool | `Top] =
@@ -251,6 +257,7 @@ struct
 
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 
   (* Need custom compare because normal compare on CIL Exp might not terminate *)
   let rec compareExp a b =
@@ -417,6 +424,7 @@ struct
   let name () = "expressions"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end
 
 module CilFun: Printable.S with type t = varinfo =
@@ -434,6 +442,7 @@ struct
   let name () = "functions"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end
 
 module CilFundec =
@@ -452,6 +461,7 @@ struct
   let dummy = dummyFunDec
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end
 
 module CilField =
@@ -469,6 +479,7 @@ struct
   let name () = "field"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end
 
 module FieldVariables =
@@ -519,6 +530,7 @@ struct
   let name () = "variables and fields"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 
 end
 
@@ -537,4 +549,5 @@ struct
   let name () = "types"
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 80 x))
+  let represent x = `Value (short 80 x)
 end

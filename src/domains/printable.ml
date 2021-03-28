@@ -5,6 +5,8 @@ open Pretty
 type json = Yojson.Safe.t
 let json_to_yojson x = x
 
+type representation = Representation.t
+
 module type S =
 sig
   type t
@@ -20,6 +22,7 @@ sig
   val pretty_f: (int -> t -> string) -> unit -> t -> doc
   val printXml : 'a BatInnerIO.output -> t -> unit
   (* This is for debugging *)
+  val represent : t -> representation
   val name: unit -> string
   val to_yojson : t -> json
 
@@ -72,6 +75,7 @@ struct
   let name () = "blank"
   let pretty_diff () (x,y) = dprintf "Unsupported"
   let printXml f _ = BatPrintf.fprintf f "<value>\n<data>\nOutput not supported!\n</data>\n</value>\n"
+  let represent _ = `Nothing
 end
 
 (* Only include where data is guaranteed to be non-cyclic *)
@@ -93,6 +97,7 @@ struct
   let pretty_diff () (x,y) =
     dprintf "%s: %a not leq %a" (P.name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (P.short 800 x))
+  let represent x = `Value (P.short 800 x)
 end
 
 
@@ -112,6 +117,7 @@ struct
   let pretty_diff () (x,y) =
     dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f () = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape N.name)
+  let represent () = `Value N.name
 
   let arbitrary () = QCheck.unit
   let relift x = x
@@ -155,6 +161,7 @@ struct
   let isSimple = lift_f Base.isSimple
   let pretty_diff () (x,y) = Base.pretty_diff () (x.BatHashcons.obj,y.BatHashcons.obj)
   let printXml f x = Base.printXml f x.BatHashcons.obj
+  let represent x = Base.represent x.BatHashcons.obj
 
   let invariant c = lift_f (Base.invariant c)
   let equal_debug x y = (* This debug version checks if we call hashcons enough to have up-to-date tags. Comment out the equal below to use this. This will be even slower than with hashcons disabled! *)
@@ -269,6 +276,11 @@ struct
     | `Top      -> BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape N.top_name)
     | `Lifted x -> Base.printXml f x
 
+  let represent = function
+    | `Bot -> `Value N.bot_name
+    | `Top -> `Value N.top_name
+    | `Lifted x -> Base.represent x
+
   let invariant c = function
     | `Lifted x -> Base.invariant c x
     | `Top | `Bot -> Invariant.none
@@ -336,6 +348,10 @@ struct
   let printXml f = function
     | `Left x  -> BatPrintf.fprintf f "<value><map>\n<key>\nLeft\n</key>\n%a</map>\n</value>\n" Base1.printXml x
     | `Right x -> BatPrintf.fprintf f "<value><map>\n<key>\nRight\n</key>\n%a</map>\n</value>\n" Base2.printXml x
+
+  let represent = function
+    | `Left x -> `Assoc [ ("Left", Base1.represent x) ]
+    | `Right x -> `Assoc [ ("Left", Base2.represent x) ]
 end
 
 module Option (Base: S) (N: Name) = Either (Base) (UnitConf (N))
@@ -408,6 +424,12 @@ struct
     | `Top       -> BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" N.top_name
     | `Lifted1 x -> BatPrintf.fprintf f "<value>\n<map>\n<key>\nLifted1\n</key>\n%a</map>\n</value>\n" Base1.printXml x
     | `Lifted2 x -> BatPrintf.fprintf f "<value>\n<map>\n<key>\nLifted2\n</key>\n%a</map>\n</value>\n" Base2.printXml x
+
+  let represent = function
+    | `Bot -> `Value N.bot_name
+    | `Top -> `Value N.top_name
+    | `Lifted1 x -> `Assoc [ ("Lifted1", Base1.represent x) ]
+    | `Lifted2 x -> `Assoc [ ("Lifted2", Base2.represent x) ]
 end
 
 module type ProdConfiguration =
@@ -461,6 +483,9 @@ struct
 
   let printXml f (x,y) =
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base1.name ())) Base1.printXml x (Goblintutil.escape (Base2.name ())) Base2.printXml y
+
+  let represent (x, y) =
+    `Assoc [ (Base1.name (), Base1.represent x); (Base2.name (), Base2.represent y) ]
 
   let pretty_diff () ((x1,x2:t),(y1,y2:t)): Pretty.doc =
     if Base1.equal x1 y1 then
@@ -516,6 +541,9 @@ struct
   let printXml f (x,y,z) =
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base1.name ())) Base1.printXml x (Goblintutil.escape (Base2.name ())) Base2.printXml y (Goblintutil.escape (Base3.name ())) Base3.printXml z
 
+  let represent (x, y, z) =
+    `Assoc [ (Base1.name (), Base1.represent x); (Base2.name (), Base2.represent y); (Base3.name (), Base3.represent z) ]
+
   let pretty () x = pretty_f short () x
   let name () = Base1.name () ^ " * " ^ Base2.name () ^ " * " ^ Base3.name ()
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
@@ -553,6 +581,10 @@ struct
     BatPrintf.fprintf f "<value>\n<map>\n";
     loop 0 xs;
     BatPrintf.fprintf f "</map>\n</value>\n"
+
+  let represent xs =
+    let f = BatList.mapi (fun i v -> (string_of_int i, Base.represent v))
+    in `Assoc (f xs)
 end
 
 module type ChainParams = sig
@@ -575,6 +607,7 @@ struct
   let pretty_diff () ((x:t),(y:t)): Pretty.doc =
     Pretty.dprintf "%a not leq %a" pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (P.names x)
+  let represent x = `Value (P.names x)
 
   let arbitrary () = QCheck.int_range 0 (P.n - 1)
   let relift x = x
@@ -625,6 +658,10 @@ struct
   let printXml f = function
     | `Bot -> BatPrintf.fprintf f "<value>\n<data>\nbottom\n</data>\n</value>\n"
     | `Lifted n -> Base.printXml f n
+
+  let represent = function
+    | `Bot -> `Value "bottom"
+    | `Lifted n -> Base.represent n
 end
 
 module LiftTop (Base : S) =
@@ -677,6 +714,10 @@ struct
     | `Top -> BatPrintf.fprintf f "<value>\n<data>\ntop\n</data>\n</value>\n"
     | `Lifted n -> Base.printXml f n
 
+  let represent = function
+    | `Top -> `Value "top"
+    | `Lifted n -> Base.represent n
+
   let arbitrary () =
     let open QCheck.Iter in
     let shrink = function
@@ -704,6 +745,7 @@ struct
   let pretty_diff () (x,y) =
     dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" x
+  let represent x = `Value x
 end
 
 

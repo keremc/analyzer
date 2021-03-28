@@ -1037,6 +1037,17 @@ struct
     | `Bot -> BatPrintf.fprintf f "<value>\n<data>\nbottom\n</data>\n</value>\n"
     | `Top -> BatPrintf.fprintf f "<value>\n<data>\ntop\n</data>\n</value>\n"
 
+  let represent = function
+    | `Int n -> ID.represent n
+    | `Address n -> AD.represent n
+    | `Struct n -> Structs.represent n
+    | `Union n -> Unions.represent n
+    | `Array n -> CArrays.represent n
+    | `Blob n -> Blobs.represent n
+    | `List n -> Lists.represent n
+    | `Bot -> `Value "bottom"
+    | `Top -> `Value "top"
+
   let invariant c = function
     | `Int n -> ID.invariant c n
     | `Address n -> AD.invariant c n

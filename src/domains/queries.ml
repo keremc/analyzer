@@ -285,4 +285,6 @@ struct
     | (x,_) -> x
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
+
+  let represent x = `Value (short 800 x)
 end

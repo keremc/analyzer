@@ -69,6 +69,7 @@ struct
   let pretty_diff () (x,y) =
     Pretty.dprintf "{@[%a@] ...}" M.pretty_diff (x,y)
   let printXml f xs = M.printXml f xs
+  let represent xs = M.represent xs
   let widen_with_fct = M.widen_with_fct
   let leq_with_fct = M.leq_with_fct
   let join_with_fct = M.join_with_fct

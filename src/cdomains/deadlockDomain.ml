@@ -19,6 +19,7 @@ struct
   let pretty_f sh () x = Ad.pretty () x.addr ++ text "@" ++ Basetype.ProgLines.pretty () x.loc
   let pretty = pretty_f short
   let printXml c x = Ad.printXml c x.addr
+  let represent x = Ad.represent x.addr
   let pretty_diff () (x,y) = Ad.pretty_diff () (x.addr,y.addr)
 end
 

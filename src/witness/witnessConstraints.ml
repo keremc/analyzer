@@ -20,6 +20,7 @@ struct
     | Function f      -> "return of " ^ f.vname ^ "()"
     | FunctionEntry f -> f.vname ^ "()"
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 100 x))
+  let represent x = `Value (short 100 x)
   let name () = "var"
   let invariant _ _ = Invariant.none
   let tag _ = failwith "PrintableVar: no tag"

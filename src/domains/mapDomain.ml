@@ -179,6 +179,11 @@ struct
     iter print_one xs;
     BatPrintf.fprintf f "</map>\n</value>\n"
 
+  let represent xs =
+    let f (k, v) =
+      (Domain.short 800 k), (Range.represent v)
+    in `Assoc (xs |> M.to_seq |> List.of_seq |> List.map f)
+
   let arbitrary () = QCheck.always M.empty (* S TODO: non-empty map *)
 end
 

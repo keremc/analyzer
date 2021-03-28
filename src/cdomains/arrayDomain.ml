@@ -61,6 +61,7 @@ struct
   let set_inplace = set
   let copy a = a
   let printXml f x = BatPrintf.fprintf f "<value>\n<map>\n<key>Any</key>\n%a\n</map>\n</value>\n" Val.printXml x
+  let represent x = `Assoc [ ("Any", Val.represent x) ]
   let smart_join _ _ = join
   let smart_widen _ _ = widen
   let smart_leq _ _ = leq
@@ -137,6 +138,17 @@ struct
           <key>m</key>\n%a\n\n
           <key>r</key>\n%a\n\n
         </map></value>\n" Expp.printXml e Val.printXml xl Val.printXml xm Val.printXml xr
+
+  let represent ((e, (xl, xm, xr)) as x) =
+    if is_not_partitioned x then
+      let join_over_all = Val.join (Val.join xl xm) xr in
+      `Assoc [ ("Any", Val.represent join_over_all) ]
+    else
+      let e' = Expp.represent e in
+      let l = Val.represent xl in
+      let m = Val.represent xm in
+      let r = Val.represent xr in
+      `Assoc [ ("Partitioned By", e'); ("l", l); ("m", m); ("r", r) ]
 
   let get (ask:Q.ask) ((e, (xl, xm, xr)) as x) (i,_) =
     match e, i with
@@ -602,6 +614,9 @@ struct
 
   let printXml f (x,y) =
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base.name ())) Base.printXml x "length" Idx.printXml y
+
+  let represent (x, y) =
+    `Assoc [ (Base.name (), Base.represent x); ("length", Idx.represent y) ]
 end
 
 
@@ -646,6 +661,8 @@ struct
 
   let printXml f (x,y) =
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base.name ())) Base.printXml x "length" Idx.printXml y
+  let represent (x, y) =
+    `Assoc [ (Base.name (), Base.represent x); ("length", Idx.represent y) ]
 end
 
 module FlagConfiguredArrayDomain(Val: LatticeWithSmartOps) (Idx:IntDomain.Z):S with type value = Val.t and type idx = Idx.t =
@@ -715,6 +732,7 @@ struct
   let smart_leq f g = binop (P.smart_leq f g) (T.smart_leq f g)
 
   let printXml f = unop (P.printXml f) (T.printXml f)
+  let represent = unop (P.represent) (T.represent)
   let pretty_f _ = pretty
 
   let update_length newl x = unop_to_t (P.update_length newl) (T.update_length newl) x

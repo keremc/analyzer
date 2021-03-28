@@ -136,6 +136,9 @@ struct
     iter (Base.printXml f) xs;
     BatPrintf.fprintf f "</set>\n</value>\n"
 
+  let represent xs =
+    `List (enum xs |> BatEnum.map Base.represent |> BatList.of_enum)
+
   let arbitrary () = QCheck.map ~rev:elements of_list @@ QCheck.small_list (Base.arbitrary ())
 end
 
@@ -339,6 +342,10 @@ struct
       S.iter (Base.printXml f) s;
       BatPrintf.fprintf f "</set></value>\n"
 
+  let represent = function
+    | All -> `Value "All"
+    | Set s -> S.represent s
+
   let invariant c = function
     | All -> Invariant.none
     | Set s -> S.invariant c s
@@ -537,6 +544,8 @@ struct
     BatPrintf.fprintf f "<value>\n<set>\n";
     List.iter (E.printXml f) (elements x);
     BatPrintf.fprintf f "</set>\n</value>\n"
+
+  let represent x = `List (elements x |> List.map E.represent)
 end
 
 (* module Hoare (B : Lattice.S) (N: ToppedSetNames) : sig *)

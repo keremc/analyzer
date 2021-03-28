@@ -38,6 +38,8 @@ struct
   let printXml f x =
     BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n"
       (Goblintutil.escape (short 80 x))
+
+  let represent x = `Value (short 80 x)
 end
 
 module LabeledString =

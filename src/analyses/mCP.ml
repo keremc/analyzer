@@ -140,6 +140,13 @@ struct
     in
     unop_fold print_one () xs
 
+  let represent xs =
+    let f (i, x) =
+      let name = BatList.assoc i !analyses_table in
+      let (module S : Printable.S) = assoc_dom i in
+      name, S.represent (obj x)
+    in `Assoc (BatList.map f xs)
+
   let invariant c = unop_fold (fun a n (module S : Printable.S) x ->
       Invariant.(a && S.invariant c (obj x))
     ) Invariant.none
