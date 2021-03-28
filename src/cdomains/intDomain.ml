@@ -485,6 +485,8 @@ struct
 
   include Std (struct type nonrec t = t let name = name let top_of = top_of let bot_of = bot_of let short = short let equal = equal end)
 
+  let represent = function None -> `Value "bottom" | Some (x, y) -> `Pair (`Value (Ints_t.to_string x), `Value (Ints_t.to_string y))
+
   let equal_to i = function
     | None -> failwith "unsupported: equal_to with bottom"
     | Some (a, b) ->
@@ -1882,6 +1884,7 @@ module IntDomTupleImpl = struct
   let is_excl_list = exists % mapp { fp = fun (type a) (module I:S with type t = a) -> I.is_excl_list }
   (* others *)
   let short w = String.concat "; " % to_list % mapp { fp = fun (type a) (module I:S with type t = a) x -> I.name () ^ ":" ^ (I.short (w / 4) x) }
+  let represent = Representation.list % to_list % mapp { fp = fun (type a) (module I:S with type t = a) x -> `Tagged (I.name (), I.represent x) }
   let hash = List.fold_left (lxor) 0 % to_list % mapp { fp = fun (type a) (module I:S with type t = a) -> I.hash }
 
   (* f2: binary ops *)
@@ -1921,7 +1924,6 @@ module IntDomTupleImpl = struct
   let pretty = pretty_f short
   let pretty_diff () (x,y) = dprintf "%a instead of %a" pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (short 800 x)
-  let represent x = `Value (short 800 x)
 
   let invariant _ _ = failwith "invariant not implemented for IntDomTupleImpl. Use invariant_ikind instead"
 

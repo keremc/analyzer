@@ -15,3 +15,5 @@ let rec to_yojson (r : t) : Yojson.Safe.t = match r with
   | `List l -> `List (BatList.map to_yojson l)
   | `Assoc l -> `Assoc (BatList.map (fun (k, v) -> k, to_yojson v) l)
   | `Tagged (n, r) -> `List [ `String n; to_yojson r ]
+
+let list l : t = `List l
