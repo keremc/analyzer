@@ -137,7 +137,7 @@ struct
     BatPrintf.fprintf f "</set>\n</value>\n"
 
   let represent xs =
-    `List (enum xs |> BatEnum.map Base.represent |> BatList.of_enum)
+    Representation.tagged "set" (enum xs |> BatEnum.map Base.represent |> BatList.of_enum |> Representation.list)
 
   let arbitrary () = QCheck.map ~rev:elements of_list @@ QCheck.small_list (Base.arbitrary ())
 end
