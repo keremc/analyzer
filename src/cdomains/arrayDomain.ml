@@ -142,13 +142,13 @@ struct
   let represent ((e, (xl, xm, xr)) as x) =
     if is_not_partitioned x then
       let join_over_all = Val.join (Val.join xl xm) xr in
-      `Assoc [ ("Any", Val.represent join_over_all) ]
+      Representation.assoc [ ("Any", Val.represent join_over_all) ]
     else
       let e' = Expp.represent e in
       let l = Val.represent xl in
       let m = Val.represent xm in
       let r = Val.represent xr in
-      `Assoc [ ("Partitioned by", e'); ("l", l); ("m", m); ("r", r) ]
+      Representation.assoc [ ("partitioned by", e'); ("l", l); ("m", m); ("r", r) ]
 
   let get (ask:Q.ask) ((e, (xl, xm, xr)) as x) (i,_) =
     match e, i with
@@ -616,7 +616,7 @@ struct
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base.name ())) Base.printXml x "length" Idx.printXml y
 
   let represent (x, y) =
-    `Assoc [ (Base.name (), Base.represent x); ("Length", Idx.represent y) ]
+    Representation.assoc [ (Base.name (), Base.represent x); ("length", Idx.represent y) ]
 end
 
 
@@ -662,7 +662,7 @@ struct
   let printXml f (x,y) =
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base.name ())) Base.printXml x "length" Idx.printXml y
   let represent (x, y) =
-    `Assoc [ (Base.name (), Base.represent x); ("Length", Idx.represent y) ]
+    Representation.assoc [ (Base.name (), Base.represent x); ("length", Idx.represent y) ]
 end
 
 module FlagConfiguredArrayDomain(Val: LatticeWithSmartOps) (Idx:IntDomain.Z):S with type value = Val.t and type idx = Idx.t =
