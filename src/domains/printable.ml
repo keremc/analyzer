@@ -277,8 +277,8 @@ struct
     | `Lifted x -> Base.printXml f x
 
   let represent = function
-    | `Bot -> `Value N.bot_name
-    | `Top -> `Value N.top_name
+    | `Bot -> `Tagged ("bot", `Value N.bot_name)
+    | `Top -> `Tagged ("top", `Value N.top_name)
     | `Lifted x -> Base.represent x
 
   let invariant c = function
@@ -426,8 +426,8 @@ struct
     | `Lifted2 x -> BatPrintf.fprintf f "<value>\n<map>\n<key>\nLifted2\n</key>\n%a</map>\n</value>\n" Base2.printXml x
 
   let represent = function
-    | `Bot -> `Value N.bot_name
-    | `Top -> `Value N.top_name
+    | `Bot -> `Tagged ("bot", `Value N.bot_name)
+    | `Top -> `Tagged ("top", `Value N.top_name)
     | `Lifted1 x -> `Assoc [ ("Lifted1", Base1.represent x) ]
     | `Lifted2 x -> `Assoc [ ("Lifted2", Base2.represent x) ]
 end
@@ -660,7 +660,7 @@ struct
     | `Lifted n -> Base.printXml f n
 
   let represent = function
-    | `Bot -> `Value "bottom"
+    | `Bot -> `Tagged ("bot", `Value "bottom")
     | `Lifted n -> Base.represent n
 end
 
@@ -715,7 +715,7 @@ struct
     | `Lifted n -> Base.printXml f n
 
   let represent = function
-    | `Top -> `Value "top"
+    | `Top -> `Tagged ("top", `Value "top")
     | `Lifted n -> Base.represent n
 
   let arbitrary () =

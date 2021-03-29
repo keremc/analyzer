@@ -485,7 +485,7 @@ struct
 
   include Std (struct type nonrec t = t let name = name let top_of = top_of let bot_of = bot_of let short = short let equal = equal end)
 
-  let represent = function None -> `Value "bottom" | Some (x, y) -> `Pair (`Value (Ints_t.to_string x), `Value (Ints_t.to_string y))
+  let represent = function None -> `Tagged ("bot", `Value "bottom") | Some (x, y) -> `Pair (`Value (Ints_t.to_string x), `Value (Ints_t.to_string y))
 
   let equal_to i = function
     | None -> failwith "unsupported: equal_to with bottom"
