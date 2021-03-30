@@ -27,6 +27,10 @@ let assoc l : t = `Assoc l
 
 let tagged t r : t = `Tagged (t, r)
 
+let bot s = tagged "bot" (value s)
+
+let top s = tagged "top" (value s)
+
 let is_value = function
   | `Value _ -> true
   | _ -> false

@@ -277,8 +277,8 @@ struct
     | `Lifted x -> Base.printXml f x
 
   let represent = function
-    | `Bot -> `Tagged ("bot", `Value N.bot_name)
-    | `Top -> `Tagged ("top", `Value N.top_name)
+    | `Bot -> Representation.bot N.bot_name
+    | `Top -> Representation.top N.top_name
     | `Lifted x -> Base.represent x
 
   let invariant c = function
@@ -426,8 +426,8 @@ struct
     | `Lifted2 x -> BatPrintf.fprintf f "<value>\n<map>\n<key>\nLifted2\n</key>\n%a</map>\n</value>\n" Base2.printXml x
 
   let represent = function
-    | `Bot -> `Tagged ("bot", `Value N.bot_name)
-    | `Top -> `Tagged ("top", `Value N.top_name)
+    | `Bot -> Representation.bot N.bot_name
+    | `Top -> Representation.top N.top_name
     | `Lifted1 x -> `Assoc [ ("Lifted1", Base1.represent x) ]
     | `Lifted2 x -> `Assoc [ ("Lifted2", Base2.represent x) ]
 end
@@ -583,8 +583,9 @@ struct
     BatPrintf.fprintf f "</map>\n</value>\n"
 
   let represent xs =
-    let f = BatList.mapi (fun i v -> (string_of_int i, Base.represent v))
-    in `Assoc (f xs)
+    xs
+    |> BatList.mapi (fun i v -> (string_of_int i, Base.represent v))
+    |> Representation.assoc
 end
 
 module type ChainParams = sig
@@ -660,7 +661,7 @@ struct
     | `Lifted n -> Base.printXml f n
 
   let represent = function
-    | `Bot -> `Tagged ("bot", `Value "bottom")
+    | `Bot -> Representation.bot "bottom"
     | `Lifted n -> Base.represent n
 end
 
@@ -715,7 +716,7 @@ struct
     | `Lifted n -> Base.printXml f n
 
   let represent = function
-    | `Top -> `Tagged ("top", `Value "top")
+    | `Top -> Representation.top "top"
     | `Lifted n -> Base.represent n
 
   let arbitrary () =
