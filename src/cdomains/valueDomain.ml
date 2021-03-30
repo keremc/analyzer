@@ -1045,8 +1045,8 @@ struct
     | `Array n -> CArrays.represent n
     | `Blob n -> Blobs.represent n
     | `List n -> Lists.represent n
-    | `Bot -> `Value "bottom"
-    | `Top -> `Value "top"
+    | `Bot -> Representation.bot "bottom"
+    | `Top -> Representation.top "top"
 
   let invariant c = function
     | `Int n -> ID.invariant c n
