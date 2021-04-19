@@ -382,9 +382,40 @@ struct
       (* handle save_run/load_run *)
       let append_opt opt file = let o = get_string opt in if o = "" then "" else o ^ Filename.dir_sep ^ file in
       let solver_file = "solver.marshalled" in
-      let save_run = append_opt "save_run" solver_file in
+      let save_run = get_string "save_run" in
       let load_run = append_opt "load_run" solver_file in
       let compare_runs = get_string_list "compare_runs" in
+      let gobview_dump = get_string "exp.gobview.dump" in
+
+      let save_state (lh, gh) dir ?(gobview=false) () =
+        let solver = Filename.concat dir solver_file in
+        let cil = Filename.concat dir "cil.marshalled" in
+        let config = Filename.concat dir "config.json" in
+        let meta = Filename.concat dir "meta.json" in
+        let analyses = Filename.concat dir "analyses.marshalled" in
+        let warnings = Filename.concat dir "warnings.marshalled" in
+        if get_bool "dbg.verbose" then (
+          print_endline ("Saving the solver result to " ^ solver ^ ", the current configuration to " ^ config ^ " and meta-data about this run to " ^ meta);
+        );
+        ignore @@ GU.create_dir (dir); (* ensure the directory exists *)
+        Serialize.marshal (lh, gh) solver;
+        GobConfig.write_file config;
+        let module Meta = struct
+            type t = { command : string; timestamp : float; localtime : string } [@@deriving to_yojson]
+            let json = to_yojson { command = GU.command; timestamp = Unix.time (); localtime = localtime () }
+          end
+        in
+        (* Yojson.Safe.to_file meta Meta.json; *)
+        Yojson.Safe.pretty_to_channel (Stdlib.open_out meta) Meta.json; (* the above is compact, this is pretty-printed *)
+        if gobview then (
+          if get_bool "dbg.verbose" then (
+            print_endline ("Saving the CIL state to " ^ cil ^ ", the analysis table to " ^ analyses ^ " and the warning table to " ^ warnings);
+          );
+          Serialize.marshal (file, Cabs2cil.environment) cil;
+          Serialize.marshal !MCP.analyses_table analyses;
+          Serialize.marshal !Messages.warning_table warnings;
+        )
+      in
 
       let lh, gh = if load_run <> "" then (
           if get_bool "dbg.verbose" then
@@ -410,25 +441,10 @@ struct
             print_endline ("Solving the constraint system with " ^ get_string "solver" ^ ". Show stats with ctrl+c, quit with ctrl+\\.");
           if get_bool "dbg.earlywarn" then Goblintutil.should_warn := true;
           let lh, gh = Stats.time "solving" (Slvr.solve entrystates entrystates_global) startvars' in
-          if save_run <> "" then (
-            let analyses = append_opt "save_run" "analyses.marshalled" in
-            let config = append_opt "save_run" "config.json" in
-            let meta = append_opt "save_run" "meta.json" in
-            if get_bool "dbg.verbose" then (
-              print_endline ("Saving the solver result to " ^ save_run ^ ", the analysis table to " ^ analyses ^ ", the current configuration to " ^ config ^ " and meta-data about this run to " ^ meta);
-            );
-            ignore @@ GU.create_dir (get_string "save_run"); (* ensure the directory exists *)
-            Serialize.marshal (lh, gh) save_run;
-            Serialize.marshal !MCP.analyses_table analyses;
-            GobConfig.write_file config;
-            let module Meta = struct
-                type t = { command : string; timestamp : float; localtime : string } [@@deriving to_yojson]
-                let json = to_yojson { command = GU.command; timestamp = Unix.time (); localtime = localtime () }
-              end
-            in
-            (* Yojson.Safe.to_file meta Meta.json; *)
-            Yojson.Safe.pretty_to_channel (Stdlib.open_out meta) Meta.json (* the above is compact, this is pretty-printed *)
-          );
+          if save_run <> "" then
+            save_state (lh, gh) save_run ()
+          else if gobview_dump <> "" then
+            save_state (lh, gh) gobview_dump ~gobview:true ();
           lh, gh
         )
       in
