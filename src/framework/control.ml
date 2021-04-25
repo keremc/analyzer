@@ -416,7 +416,7 @@ struct
           Serialize.marshal (file, Cabs2cil.environment) cil;
           Serialize.marshal !MCP.analyses_table analyses;
           Serialize.marshal !Messages.warning_table warnings;
-          Serialize.marshal (Stats.top, Gc.stat ()) stats
+          Serialize.marshal (Stats.top, Gc.quick_stat ()) stats
         )
       in
 
