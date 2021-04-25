@@ -394,6 +394,7 @@ struct
         let meta = Filename.concat dir "meta.json" in
         let analyses = Filename.concat dir "analyses.marshalled" in
         let warnings = Filename.concat dir "warnings.marshalled" in
+        let stats = Filename.concat dir "stats.marshalled" in
         if get_bool "dbg.verbose" then (
           print_endline ("Saving the solver result to " ^ solver ^ ", the current configuration to " ^ config ^ " and meta-data about this run to " ^ meta);
         );
@@ -409,11 +410,13 @@ struct
         Yojson.Safe.pretty_to_channel (Stdlib.open_out meta) Meta.json; (* the above is compact, this is pretty-printed *)
         if gobview then (
           if get_bool "dbg.verbose" then (
-            print_endline ("Saving the CIL state to " ^ cil ^ ", the analysis table to " ^ analyses ^ " and the warning table to " ^ warnings);
+            print_endline ("Saving the CIL state to " ^ cil ^ ", the analysis table to " ^ analyses
+              ^ ", the warning table to " ^ warnings ^ ", and the runtime stats to " ^ stats);
           );
           Serialize.marshal (file, Cabs2cil.environment) cil;
           Serialize.marshal !MCP.analyses_table analyses;
           Serialize.marshal !Messages.warning_table warnings;
+          Serialize.marshal Stats.top stats
         )
       in
 
