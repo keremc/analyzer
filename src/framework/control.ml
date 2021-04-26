@@ -385,8 +385,9 @@ struct
       let save_run = get_string "save_run" in
       let load_run = append_opt "load_run" solver_file in
       let compare_runs = get_string_list "compare_runs" in
-      let gobview_dump = get_string "exp.gobview.dump" in
+      let gobview = get_string "exp.gobview.dump" in
 
+      (* Serialize the LHT, GHT, and other auxiliary data to [dir] *)
       let save_state (lh, gh) dir ?(gobview=false) () =
         let solver = Filename.concat dir solver_file in
         let cil = Filename.concat dir "cil.marshalled" in
@@ -445,9 +446,7 @@ struct
           if get_bool "dbg.earlywarn" then Goblintutil.should_warn := true;
           let lh, gh = Stats.time "solving" (Slvr.solve entrystates entrystates_global) startvars' in
           if save_run <> "" then
-            save_state (lh, gh) save_run ()
-          else if gobview_dump <> "" then
-            save_state (lh, gh) gobview_dump ~gobview:true ();
+            save_state (lh, gh) save_run ();
           lh, gh
         )
       in
@@ -466,6 +465,9 @@ struct
         Goblintutil.should_warn := true;
         Stats.time "verify" (Vrfyr.verify lh) gh;
       );
+
+      if gobview <> "" then
+        save_state (lh, gh) gobview ~gobview:true ();
 
       if get_bool "ana.sv-comp.enabled" then (
         (* prune already here so local_xml and thus HTML are also pruned *)
