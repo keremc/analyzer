@@ -9,14 +9,24 @@ open GobConfig
 
 module M = Messages
 
+module LatticeHashMod (S : Lattice.S) = struct
+  include S
+  let hash x = (S.hash x mod 1073741824) land 0x3fffffff
+end
+
+module HashMod (S : Printable.S) = struct
+  include S
+  let hash x = (S.hash x mod 1073741824) land 0x3fffffff
+end
+
 (** Lifts a [Spec] so that the domain is [Hashcons]d *)
 module HashconsLifter (S:Spec)
-  : Spec with module D = Lattice.HConsed (S.D)
+  : Spec with module D = Lattice.HConsed (LatticeHashMod (S.D))
           and module G = S.G
           and module C = S.C
 =
 struct
-  module D = Lattice.HConsed (S.D)
+  module D = Lattice.HConsed (LatticeHashMod (S.D))
   module G = S.G
   module C = S.C
 
@@ -91,12 +101,12 @@ end
 module HashconsContextLifter (S:Spec)
   : Spec with module D = S.D
           and module G = S.G
-          and module C = Printable.HConsed (S.C)
+          and module C = Printable.HConsed (HashMod (S.C))
 =
 struct
   module D = S.D
   module G = S.G
-  module C = Printable.HConsed (S.C)
+  module C = Printable.HConsed (HashMod (S.C))
 
   let name () = S.name () ^" context hashconsed"
 
