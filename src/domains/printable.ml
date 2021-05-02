@@ -183,15 +183,17 @@ end
 
 module HashCached (M: S) =
 struct
+  module LazyHash = Goblintutil.FixedLazy (struct type t = M.t type result = int let eval m = M.hash m end)
+
   let name () = "HashCached " ^ M.name ()
 
   type t =
     {
       m: M.t;
-      lazy_hash: int Lazy.t;
+      lazy_hash: LazyHash.t;
     }
 
-  let lift m = {m; lazy_hash = lazy (M.hash m)}
+  let lift m = {m; lazy_hash = LazyHash.make m}
   let unlift {m; _} = m
 
   let lift_f f x = f (unlift x)
@@ -201,7 +203,7 @@ struct
 
   let equal = lift_f2 M.equal
   let compare = lift_f2 M.compare
-  let hash x = Lazy.force x.lazy_hash
+  let hash x = LazyHash.force x.lazy_hash
   let short w = lift_f (M.short w)
   let isSimple = lift_f M.isSimple
 

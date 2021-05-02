@@ -410,3 +410,25 @@ let command = String.concat " " (Array.to_list Sys.argv)
 let opt_predicate (f : 'a -> bool) = function
   | Some x -> f x
   | None -> false
+
+module FixedLazy (M : sig
+  type t
+  type result
+  val eval : t -> result
+end) : sig
+  type t
+  val make : M.t -> t
+  val force : t -> M.result
+end = struct
+  type t = { user_data : M.t; mutable value : M.result option }
+
+  let make user_data = { user_data; value = None }
+
+  let force l =
+    match l.value with
+    | None ->
+        let v = M.eval l.user_data in
+        l.value <- Some v;
+        v
+    | Some v -> v
+end
