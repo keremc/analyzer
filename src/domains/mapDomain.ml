@@ -308,6 +308,7 @@ struct
   let pretty = M.pretty
   let pretty_diff = M.pretty_diff
   let printXml = M.printXml
+  let represent = M.represent
   let arbitrary = M.arbitrary
   let invariant = M.invariant
 

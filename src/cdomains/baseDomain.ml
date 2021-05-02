@@ -112,6 +112,9 @@ struct
   let printXml f r =
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (CPA.name ())) CPA.printXml r.cpa (Goblintutil.escape (PartDeps.name ())) PartDeps.printXml r.deps (Goblintutil.escape (PrivD.name ())) PrivD.printXml r.priv
 
+  let represent r =
+    `Assoc [ (CPA.name (), CPA.represent r.cpa); (PartDeps.name (), PartDeps.represent r.deps); (PrivD.name (), PrivD.represent r.priv) ]
+
   let pretty () x = pretty_f short () x
   let name () = CPA.name () ^ " * " ^ PartDeps.name () ^ " * " ^ PrivD.name ()
 

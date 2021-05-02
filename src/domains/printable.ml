@@ -212,6 +212,8 @@ struct
   let pretty_diff () ((x:t),(y:t)): Pretty.doc = M.pretty_diff () (unlift x, unlift y)
   let printXml f = lift_f (M.printXml f)
 
+  let represent = lift_f (M.represent)
+
   let to_yojson = lift_f (M.to_yojson)
 
   let arbitrary () = QCheck.map ~rev:unlift lift (M.arbitrary ())
