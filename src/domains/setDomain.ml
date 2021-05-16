@@ -346,6 +346,10 @@ struct
     | All -> `Value "All"
     | Set s -> S.represent s
 
+  let to_yojson = function
+    | All -> `Variant ("All", None)
+    | Set s -> `Variant ("Set", Some (S.to_yojson s))
+
   let invariant c = function
     | All -> Invariant.none
     | Set s -> S.invariant c s

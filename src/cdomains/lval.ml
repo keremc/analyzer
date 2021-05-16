@@ -8,14 +8,14 @@ type ('a, 'b) offs = [
   | `NoOffset
   | `Field of 'a * ('a,'b) offs
   | `Index of 'b * ('a,'b) offs
-] [@@deriving to_yojson]
+]
 
 type ('a,'b) offs_uk = [
   | `NoOffset
   | `UnknownOffset
   | `Field of 'a * ('a,'b) offs
   | `Index of 'b * ('a,'b) offs
-] [@@deriving to_yojson]
+]
 
 
 let rec listify ofs =
@@ -26,7 +26,7 @@ let rec listify ofs =
 
 module Offset (Idx: IntDomain.Z) =
 struct
-  type t = (fieldinfo, Idx.t) offs [@@deriving to_yojson]
+  type t = (fieldinfo, Idx.t) offs
   include Printable.Std
 
   let eq_field x y = compFullName x.fcomp ^ x.fname = compFullName y.fcomp ^ y.fname
@@ -139,6 +139,7 @@ struct
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
   let represent x = `Value (short 800 x)
+  let to_yojson x = short 800 x |> [%to_yojson: string]
 end
 
 module type S =
@@ -174,11 +175,11 @@ end
 
 module Normal (Idx: IntDomain.Z) =
 struct
-  type field = fieldinfo [@@deriving to_yojson]
-  type idx = Idx.t [@@deriving to_yojson]
+  type field = fieldinfo
+  type idx = Idx.t
   (* A SafePtr is a pointer that does not point to any variables of the analyzed program (assuming external functions don't return random pointers but only pointers to things they can reach).
    * UnknownPtr includes SafePtr *)
-  type t = Addr of (varinfo * (field, idx) offs) | StrPtr of string | NullPtr | SafePtr | UnknownPtr [@@deriving to_yojson]
+  type t = Addr of (varinfo * (field, idx) offs) | StrPtr of string | NullPtr | SafePtr | UnknownPtr
   module Offs = Offset (Idx)
   include Printable.Std
   let name () = "Normal Lvals"
@@ -332,6 +333,7 @@ struct
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
   let represent x = `Value (short 800 x)
+  let to_yojson x = short 800 x |> [%to_yojson: string]
 
   let arbitrary () = QCheck.always UnknownPtr (* S TODO: non-unknown *)
 end
@@ -373,6 +375,7 @@ struct
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
   let represent x = `Value (short 800 x)
+  let to_yojson x = short 800 x |> [%to_yojson: string]
 end
 
 module Stateless (Idx: Printable.S) =
@@ -401,6 +404,7 @@ struct
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
   let represent x = `Value (short 800 x)
+  let to_yojson x = short 800 x |> [%to_yojson: string]
 end
 
 module Fields =
@@ -430,6 +434,8 @@ struct
     let o = BatIO.output_string () in
     printInnerXml o x;
     `Value (BatIO.close_out o)
+
+  let to_yojson x = short 80 x |> [%to_yojson: string]
 
   let rec prefix x y = match x,y with
     | (x::xs), (y::ys) when FI.equal x y -> prefix xs ys
@@ -524,7 +530,7 @@ end
 module CilLval =
 struct
   include Printable.Std
-  type t = varinfo * (fieldinfo, exp) offs [@@deriving to_yojson]
+  type t = varinfo * (fieldinfo, exp) offs
 
   let equal  (x1,o1) (x2,o2) =
     let rec eq a b =
@@ -609,4 +615,5 @@ struct
 
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (short 800 x))
   let represent x = `Value (short 800 x)
+  let to_yojson x = short 800 x |> [%to_yojson: string]
 end

@@ -456,14 +456,16 @@ module Std (B: sig
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (short 800 x)
   let represent x = `Value (short 800 x)
 
+  let to_yojson x = short 800 x |> [%to_yojson: string]
+
   include StdTop (B)
 end
 
 module IntervalFunctor(Ints_t : IntOps.IntOps): S with type int_t = Ints_t.t and type t = (Ints_t.t * Ints_t.t) option =
 struct
   let name () = "intervals"
-  type int_t = Ints_t.t [@to_yojson fun i -> `String (Ints_t.to_string i)] [@@deriving to_yojson]
-  type t = (int_t  * int_t) option [@@deriving to_yojson]
+  type int_t = Ints_t.t
+  type t = (int_t  * int_t) option
 
   let min_int ik = Ints_t.of_bigint @@ fst @@ Size.range_big_int ik
   let max_int ik = Ints_t.of_bigint @@ snd @@ Size.range_big_int ik
@@ -789,7 +791,7 @@ module Integers : IkindUnawareS with type t = int64 and type int_t = int64 = (* 
 struct
   include Printable.Std
   let name () = "integers"
-  type t = int64 [@@deriving to_yojson]
+  type t = int64 [@encoding `string] [@@deriving to_yojson]
   type int_t = int64
   let top () = raise Unknown
   let bot () = raise Error
@@ -1024,7 +1026,7 @@ module BigInt = struct
   let short l x = BI.to_string x
   let isSimple _ = true
   let pretty _ x = Pretty.text (BI.to_string x)
-  let to_yojson x = failwith "to_yojson not implemented for BigIntPrintable"
+  let to_yojson x = BI.to_string x |> [%to_yojson: string]
   include Std (struct type nonrec t = t let name = name let top_of = top_of let bot_of = bot_of let short = short let equal = equal end)
 
   let arbitrary () = QCheck.map ~rev:to_int64 of_int64 QCheck.int64
@@ -1054,7 +1056,7 @@ struct
     | `Excluded of S.t * R.t
     | `Definite of BigInt.t
     | `Bot
-  ] [@@deriving to_yojson]
+  ]
   type int_t = BigInt.t
   let name () = "def_exc"
 
@@ -1562,7 +1564,7 @@ module Enums : S with type int_t = BigInt.t = struct
     include SetDomain.Make(I)
     let is_singleton s = cardinal s = 1
   end
-  type t = Inc of ISet.t | Exc of ISet.t * R.t [@@deriving to_yojson] (* inclusion/exclusion set *)
+  type t = Inc of ISet.t | Exc of ISet.t * R.t (* inclusion/exclusion set *)
 
   type int_t = BI.t
   let name () = "enums"
@@ -1803,7 +1805,7 @@ module IntDomTupleImpl = struct
   module I1 = DefExc
   module I2 = Interval
   module I3 = Enums
-  type t = I1.t option * I2.t option * I3.t option [@@deriving to_yojson]
+  type t = I1.t option * I2.t option * I3.t option
 
   (* The Interval domain can lead to too many contexts for recursive functions (top is [min,max]), but we don't want to drop all ints as with `exp.no-int-context`. TODO better solution? *)
   let no_interval = Tuple3.map2 (const None)
@@ -1884,6 +1886,7 @@ module IntDomTupleImpl = struct
   let is_excl_list = exists % mapp { fp = fun (type a) (module I:S with type t = a) -> I.is_excl_list }
   (* others *)
   let short w = String.concat "; " % to_list % mapp { fp = fun (type a) (module I:S with type t = a) x -> I.name () ^ ":" ^ (I.short (w / 4) x) }
+  let to_yojson = [%to_yojson: Yojson.Safe.t list] % to_list % mapp { fp = fun (type a) (module I:S with type t = a) x -> I.to_yojson x }
   let represent = Representation.list % to_list % mapp { fp = fun (type a) (module I:S with type t = a) x -> `Tagged (I.name (), I.represent x) }
   let hash = List.fold_left (lxor) 0 % to_list % mapp { fp = fun (type a) (module I:S with type t = a) -> I.hash }
 

@@ -98,13 +98,14 @@ struct
     dprintf "%s: %a not leq %a" (P.name ()) pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape (P.short 800 x))
   let represent x = `Value (P.short 800 x)
+  let to_yojson x = P.short 800 x |> [%to_yojson: string]
 end
 
 
 module type Name = sig val name: string end
 module UnitConf (N: Name) =
 struct
-  type t = unit [@@deriving yojson]
+  type t = unit
   include Std
   let compare _ _ = 0
   let hash () = 7134679
@@ -118,7 +119,7 @@ struct
     dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
   let printXml f () = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (Goblintutil.escape N.name)
   let represent () = `Value N.name
-
+  let to_yojson () = N.name |> [%to_yojson: string]
   let arbitrary () = QCheck.unit
   let relift x = x
 end
@@ -226,7 +227,7 @@ end
 
 module Lift (Base: S) (N: LiftingNames) =
 struct
-  type t = [`Bot | `Lifted of Base.t | `Top] [@@deriving to_yojson]
+  type t = [`Bot | `Lifted of Base.t | `Top]
   include Std
   include N
 
@@ -285,6 +286,11 @@ struct
     | `Top -> Representation.top N.top_name
     | `Lifted x -> Base.represent x
 
+  let to_yojson = function
+    | `Bot -> `Variant ("Bot", Some (N.bot_name |> [%to_yojson: string]))
+    | `Top -> `Variant ("Top", Some (N.top_name |> [%to_yojson: string]))
+    | `Lifted x -> `Variant ("Lifted", Some (Base.to_yojson x))
+
   let invariant c = function
     | `Lifted x -> Base.invariant c x
     | `Top | `Bot -> Invariant.none
@@ -305,7 +311,7 @@ end
 
 module Either (Base1: S) (Base2: S) =
 struct
-  type t = [`Left of Base1.t | `Right of Base2.t] [@@deriving to_yojson]
+  type t = [`Left of Base1.t | `Right of Base2.t]
   include Std
 
   let hash state =
@@ -356,13 +362,17 @@ struct
   let represent = function
     | `Left x -> `Assoc [ ("Left", Base1.represent x) ]
     | `Right x -> `Assoc [ ("Left", Base2.represent x) ]
+
+  let to_yojson = function
+    | `Left x -> `Variant ("Left", Some (Base1.to_yojson x))
+    | `Right x -> `Variant ("Right", Some (Base2.to_yojson x))
 end
 
 module Option (Base: S) (N: Name) = Either (Base) (UnitConf (N))
 
 module Lift2 (Base1: S) (Base2: S) (N: LiftingNames) =
 struct
-  type t = [`Bot | `Lifted1 of Base1.t | `Lifted2 of Base2.t | `Top] [@@deriving to_yojson]
+  type t = [`Bot | `Lifted1 of Base1.t | `Lifted2 of Base2.t | `Top]
   include Std
   include N
 
@@ -434,6 +444,12 @@ struct
     | `Top -> Representation.top N.top_name
     | `Lifted1 x -> `Assoc [ ("Lifted1", Base1.represent x) ]
     | `Lifted2 x -> `Assoc [ ("Lifted2", Base2.represent x) ]
+
+  let to_yojson = function
+    | `Bot -> `Variant ("Bot", Some (N.bot_name |> [%to_yojson: string]))
+    | `Top -> `Variant ("Top", Some (N.top_name |> [%to_yojson: string]))
+    | `Lifted1 x -> `Variant ("Lifted1", Some (Base1.to_yojson x))
+    | `Lifted2 x -> `Variant ("Lifted2", Some (Base2.to_yojson x))
 end
 
 module type ProdConfiguration =
@@ -446,7 +462,7 @@ module ProdConf (C: ProdConfiguration) (Base1: S) (Base2: S)=
 struct
   include C
 
-  type t = Base1.t * Base2.t [@@deriving to_yojson]
+  type t = Base1.t * Base2.t
 
   include Std
 
@@ -491,6 +507,9 @@ struct
   let represent (x, y) =
     `Assoc [ (Base1.name (), Base1.represent x); (Base2.name (), Base2.represent y) ]
 
+  let to_yojson (x, y) =
+    `Assoc [ (Base1.name (), Base1.to_yojson x); (Base2.name (), Base2.to_yojson y) ]
+
   let pretty_diff () ((x1,x2:t),(y1,y2:t)): Pretty.doc =
     if Base1.equal x1 y1 then
       Base2.pretty_diff () (x2,y2)
@@ -508,7 +527,7 @@ module ProdSimple = ProdConf (struct let expand_fst = false let expand_snd = fal
 
 module Prod3 (Base1: S) (Base2: S) (Base3: S) =
 struct
-  type t = Base1.t * Base2.t * Base3.t [@@deriving to_yojson]
+  type t = Base1.t * Base2.t * Base3.t
   include Std
   let hash (x,y,z) = Base1.hash x + Base2.hash y * 17 + Base3.hash z * 33
   let equal (x1,x2,x3) (y1,y2,y3) =
@@ -548,6 +567,9 @@ struct
   let represent (x, y, z) =
     `Assoc [ (Base1.name (), Base1.represent x); (Base2.name (), Base2.represent y); (Base3.name (), Base3.represent z) ]
 
+  let to_yojson (x, y, z) =
+    `Assoc [ (Base1.name (), Base1.to_yojson x); (Base2.name (), Base2.to_yojson y); (Base3.name (), Base3.to_yojson z) ]  
+
   let pretty () x = pretty_f short () x
   let name () = Base1.name () ^ " * " ^ Base2.name () ^ " * " ^ Base3.name ()
   let pretty_diff () (x,y) = dprintf "%s: %a not leq %a" (name ()) pretty x pretty y
@@ -558,7 +580,7 @@ end
 
 module Liszt (Base: S) =
 struct
-  type t = Base.t list [@@deriving to_yojson]
+  type t = Base.t list
   include Std
   let equal x y = try List.for_all2 Base.equal x y with Invalid_argument _ -> false
   let compare x y = BatList.compare Base.compare x y
@@ -590,6 +612,8 @@ struct
     xs
     |> BatList.mapi (fun i v -> (string_of_int i, Base.represent v))
     |> Representation.assoc
+
+  let to_yojson xs = BatList.map Base.to_yojson xs |> [%to_yojson: Yojson.Safe.t list]
 end
 
 module type ChainParams = sig
@@ -599,7 +623,7 @@ end
 
 module Chain (P: ChainParams): S with type t = int =
 struct
-  type t = int [@@deriving yojson]
+  type t = int
   include Std
   let compare x y = x-y
 
@@ -613,6 +637,7 @@ struct
     Pretty.dprintf "%a not leq %a" pretty x pretty y
   let printXml f x = BatPrintf.fprintf f "<value>\n<data>\n%s\n</data>\n</value>\n" (P.names x)
   let represent x = `Value (P.names x)
+  let to_yojson x = P.names x |> [%to_yojson: string]
 
   let arbitrary () = QCheck.int_range 0 (P.n - 1)
   let relift x = x
@@ -620,7 +645,7 @@ end
 
 module LiftBot (Base : S) =
 struct
-  type t = [`Bot | `Lifted of Base.t ] [@@deriving to_yojson]
+  type t = [`Bot | `Lifted of Base.t ]
   include Std
 
   let lift x = `Lifted x
@@ -667,11 +692,15 @@ struct
   let represent = function
     | `Bot -> Representation.bot "bottom"
     | `Lifted n -> Base.represent n
+
+  let to_yojson = function
+    | `Bot -> `Variant ("Bot", None)
+    | `Lifted n -> `Variant ("Lifted", Some (Base.to_yojson n))
 end
 
 module LiftTop (Base : S) =
 struct
-  type t = [`Top | `Lifted of Base.t ] [@@deriving to_yojson]
+  type t = [`Top | `Lifted of Base.t ]
   include Std
 
   let lift x = `Lifted x
@@ -722,6 +751,10 @@ struct
   let represent = function
     | `Top -> Representation.top "top"
     | `Lifted n -> Base.represent n
+
+  let to_yojson = function
+    | `Top -> `Variant ("Top", None)
+    | `Lifted n -> `Variant ("Lifted", Some (Base.to_yojson n))
 
   let arbitrary () =
     let open QCheck.Iter in

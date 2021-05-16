@@ -150,6 +150,17 @@ struct
       let r = Val.represent xr in
       Representation.assoc [ ("partitioned by", e'); ("l", l); ("m", m); ("r", r) ]
 
+  let to_yojson ((e, (xl, xm, xr)) as x) =
+    if is_not_partitioned x then
+      let join_over_all = Val.join (Val.join xl xm) xr in
+      `Assoc [ ("any", Val.to_yojson join_over_all) ]
+    else
+      let e' = Expp.to_yojson e in
+      let l = Val.to_yojson xl in
+      let m = Val.to_yojson xm in
+      let r = Val.to_yojson xr in
+      `Assoc [ ("partitioned by", e'); ("l", l); ("m", m); ("r", r) ]
+
   let get (ask:Q.ask) ((e, (xl, xm, xr)) as x) (i,_) =
     match e, i with
     | `Lifted e', `Lifted i' ->
@@ -617,6 +628,8 @@ struct
 
   let represent (x, y) =
     Representation.assoc [ (Base.name (), Base.represent x); ("length", Idx.represent y) ]
+
+  let to_yojson (x, y) = `Assoc [ (Base.name (), Base.to_yojson x); ("length", Idx.to_yojson y) ]
 end
 
 
@@ -663,6 +676,8 @@ struct
     BatPrintf.fprintf f "<value>\n<map>\n<key>\n%s\n</key>\n%a<key>\n%s\n</key>\n%a</map>\n</value>\n" (Goblintutil.escape (Base.name ())) Base.printXml x "length" Idx.printXml y
   let represent (x, y) =
     Representation.assoc [ (Base.name (), Base.represent x); ("length", Idx.represent y) ]
+
+  let to_yojson (x, y) = `Assoc [ (Base.name (), Base.to_yojson x); ("length", Idx.to_yojson y) ]
 end
 
 module FlagConfiguredArrayDomain(Val: LatticeWithSmartOps) (Idx:IntDomain.Z):S with type value = Val.t and type idx = Idx.t =
@@ -672,7 +687,7 @@ struct
 
   type idx = Idx.t
   type value = Val.t
-  type t = P.t option * T.t option [@@deriving to_yojson]
+  type t = P.t option * T.t option
 
   let invariant _ _ = Invariant.none
   let tag _ = failwith "FlagConfiguredArrayDomain: no tag"
@@ -733,6 +748,7 @@ struct
 
   let printXml f = unop (P.printXml f) (T.printXml f)
   let represent = unop (P.represent) (T.represent)
+  let to_yojson = unop (P.to_yojson) (T.to_yojson)
   let pretty_f _ = pretty
 
   let update_length newl x = unop_to_t (P.update_length newl) (T.update_length newl) x

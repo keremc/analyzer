@@ -67,7 +67,7 @@ type 'a basecomponents_t = {
   cpa: CPA.t;
   deps: PartDeps.t;
   priv: 'a;
-} [@@deriving to_yojson]
+}
 
 module BaseComponents (PrivD: Lattice.S):
 sig
@@ -75,7 +75,7 @@ sig
   val op_scheme: (CPA.t -> CPA.t -> CPA.t) -> (PartDeps.t -> PartDeps.t -> PartDeps.t) -> (PrivD.t -> PrivD.t -> PrivD.t) -> t -> t -> t
 end =
 struct
-  type t = PrivD.t basecomponents_t [@@deriving to_yojson]
+  type t = PrivD.t basecomponents_t
 
   include Printable.Std
   open Pretty
@@ -114,6 +114,9 @@ struct
 
   let represent r =
     `Assoc [ (CPA.name (), CPA.represent r.cpa); (PartDeps.name (), PartDeps.represent r.deps); (PrivD.name (), PrivD.represent r.priv) ]
+
+  let to_yojson r =
+    `Assoc [ (CPA.name (), CPA.to_yojson r.cpa); (PartDeps.name (), PartDeps.to_yojson r.deps); (PrivD.name (), PrivD.to_yojson r.priv) ]  
 
   let pretty () x = pretty_f short () x
   let name () = CPA.name () ^ " * " ^ PartDeps.name () ^ " * " ^ PrivD.name ()
