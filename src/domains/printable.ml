@@ -183,7 +183,7 @@ end
 
 module HashCached (M: S) =
 struct
-  module LazyHash = Goblintutil.FixedLazy (struct type t = M.t type result = int let eval m = M.hash m end)
+  module LazyHash = Goblintutil.FixedLazy (struct type t = M.t type result = int let eval m = (M.hash m mod 1073741824) land 0x3fffffff end)
 
   let name () = "HashCached " ^ M.name ()
 
